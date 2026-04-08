@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify, render_template
 from cloud_agent import Agent 
+from grok_agent import GeminiAgent
 
 app = Flask(__name__)
 
 # Inicializamos el agente fuera de las rutas para que persista la sesión
 # Usamos qwen2.5:7b como en tu main.py
-ia_agent = Agent(model="qwen2.5:7b") 
+#ia_agent = Agent(model="qwen2.5:7b") 
+ia_agent = GeminiAgent()
 
 @app.route('/')
 def index():
