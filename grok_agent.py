@@ -3,6 +3,7 @@ import json
 from groq import Groq
 from tavily import TavilyClient
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -33,12 +34,17 @@ class GeminiAgent:
 
     def get_response(self, user_input):
         try:
-            # PASO 1: El bot recibe la consulta y decide si necesita internet
-            # Le pasamos un system prompt que lo obligue a usar el contexto si se lo damos
+            # Obtenemos la fecha y hora exacta del servidor en este instante
+            ahora = datetime.now().strftime("%A %d de %B de %Y, hora %H:%M")
+
             messages = [
                 {
                     "role": "system", 
-                    "content": "Eres un asistente experto. Si el usuario te pregunta algo de actualidad o que no sabes, utiliza la información de búsqueda que se te proporcionará. Hablas español argentino."
+                    "content": f"""Eres un asistente de búsqueda en tiempo real. 
+                    LA FECHA Y HORA ACTUAL ES: {ahora}.
+                    Tu ubicación predeterminada es Buenos Aires, Argentina.
+                    REGLA DE ORO: Prioriza los datos de los resultados de búsqueda de Tavily para responder sobre clima o eventos actuales. 
+                    Si no hay info en la búsqueda, no inventes. Hablá como un argentino (che, vos)."""
                 }
             ]
 
