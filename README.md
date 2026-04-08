@@ -136,16 +136,7 @@ project-root/
 
 ---
 
-## 📸 Demo
 
-Si podés, agregá una captura de pantalla del chat:
-
-```markdown
-![Demo del Chat]
-![alt text](image.png)
-```
-
-Eso hace que el repositorio se vea mucho más profesional.
 
 ---
 
