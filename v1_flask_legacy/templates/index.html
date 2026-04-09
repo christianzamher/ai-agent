@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Bot AI - Portafolio</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Estilo para que el contenedor de chat sea scrolleable */
+        #chat-container {
+            height: 400px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        /* Personalización de la barra de scroll */
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: #e5e7eb;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+<div class="w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden border border-gray-200">
+    <div class="bg-blue-600 p-4">
+        <h1 class="text-white font-bold text-center">AI Agent Interface</h1>
+        <p class="text-blue-100 text-xs text-center">Local Model: Llama 3.3 70b</p>
+    </div>
+
+    <div id="chat-container" class="p-4 space-y-4 bg-gray-50">
+        </div>
+
+    <div class="flex items-center border-t border-gray-200 p-4 bg-white">
+        <input type="text" id="userInput" 
+               class="w-full px-4 py-2 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+               placeholder="Escribe un mensaje...">
+        
+        <button onclick="sendMessage()" 
+                class="ml-3 bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded-full transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    const chatContainer = document.getElementById('chat-container');
+    const userInputField = document.getElementById('userInput');
+
+    // Función principal para enviar mensajes
+    function sendMessage() {
+        const message = userInputField.value.trim();
+        
+        if (message) {
+            appendMessageToChat(message, 'user');
+            userInputField.value = ''; // Limpiar el input inmediatamente
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                appendMessageToChat(data.response, 'bot');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                appendMessageToChat("Error de conexión con el servidor.", 'bot');
+            });
+        }
+    }
+
+    // Escuchar la tecla Enter
+    userInputField.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Función para renderizar burbujas en el chat
+    function appendMessageToChat(message, sender) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = sender === 'user' ? "flex justify-end" : "flex justify-start";
+
+        const messageElement = document.createElement('div');
+        
+        if (sender === 'user') {
+            messageElement.className = "max-w-[80%] p-3 rounded-t-lg rounded-bl-lg bg-blue-600 text-white text-sm shadow-sm";
+            messageElement.innerHTML = `<strong>Tú:</strong><br>${message}`;
+        } else {
+            messageElement.className = "max-w-[80%] p-3 rounded-t-lg rounded-br-lg bg-white border border-gray-200 text-gray-800 text-sm shadow-sm";
+            messageElement.innerHTML = `<strong>Bot:</strong><br>${message}`;
+        }
+
+        messageWrapper.appendChild(messageElement);
+        chatContainer.appendChild(messageWrapper);
+
+        // Auto-scroll al final
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Mensaje inicial de bienvenida
+    window.onload = () => {
+        appendMessageToChat("¡Hola! Soy tu asistente inteligente local. ¿En qué puedo ayudarte hoy?", 'bot');
+    };
+</script>
+
+</body>
+</html>

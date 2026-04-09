@@ -1,0 +1,162 @@
+/* --- FUNDAMENTOS  --- */
+:root {
+    /* Paleta de Colores ETI Ushuaia */
+    --eti-main-color: #2a9d8f; /* El verde petróleo del logo y menú */
+    --eti-background: #ffffff; /* Blanco Puro, esencial para la accesibilidad */
+    --eti-text: #333333;       /* Un gris muy oscuro para lectura cómoda */
+    --eti-accent-pink: #d81b60; /* Fucsia de la bailarina */
+    --eti-accent-orange: #f4a261; /* Naranja de los detalles */
+    --eti-bot-msg-bg: #f5f5f5; /* Un gris muy clarito para las burbujas del bot */
+    
+    /* El degradado de los botones del ETI */
+    --eti-gradient: linear-gradient(135deg, #f4a261 0%, #d81b60 100%);
+    
+    /* Variables de UI */
+    --chat-max-width: 900px;
+    --border-radius: 12px; /* Más redondeado y amigable */
+}
+
+body {
+    background-color: var(--eti-background);
+    color: var(--eti-text);
+    font-family: 'Montserrat', sans-serif; /* Si podés, cargá esta fuente */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* --- CONTENEDOR PRINCIPAL (UI) --- */
+#chat-container {
+    width: 100%;
+    max-width: var(--chat-max-width);
+    height: 90vh;
+    background-color: var(--eti-background);
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); /* Sombra suave, no agresiva */
+    overflow: hidden;
+}
+
+/* --- HEADER (Como el menú del ETI) --- */
+#header {
+    background-color: var(--eti-main-color);
+    color: #ffffff;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+/* --- CAJA DE CHAT (UI) --- */
+#chat-box {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* --- MENSAJES (Accesibilidad al 100%) --- */
+.msg {
+    max-width: 75%;
+    padding: 12px 18px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Burbuja del Bot (Más claro y limpio) */
+.msg.bot {
+    align-self: flex-start;
+    background-color: var(--eti-bot-msg-bg);
+    color: var(--eti-text);
+    border-bottom-left-radius: 5px; /* Detalle de UI */
+}
+
+/* Burbuja del Usuario (Usando el degradado ETI Ushuaia) */
+.msg.user {
+    align-self: flex-end;
+    background: var(--eti-gradient);
+    color: #ffffff;
+    border-bottom-right-radius: 5px; /* Detalle de UI */
+}
+
+/* --- ÁREA DE INPUT --- */
+#input-area {
+    padding: 15px 20px;
+    background-color: #f9f9f9;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Input de Texto (Limpio y claro) */
+#user-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 25px;
+    font-size: 1rem;
+    background-color: #ffffff;
+    transition: all 0.3s;
+}
+
+#user-input:focus {
+    outline: none;
+    border-color: var(--eti-main-color);
+    box-shadow: 0 0 5px rgba(42, 157, 143, 0.3);
+}
+
+/* --- EL NUEVO BOTÓN "ETI" (LA JOYA) --- */
+button {
+    padding: 10px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: var(--eti-gradient); /* Usando el Degradado ETI */
+    border: none;
+    border-radius: 25px; /* Redondeado, como los botones del ETI de image_8.png */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+button:hover {
+    transform: translateY(-2px); /* Efecto de UI de elevarse */
+    box-shadow: 0 6px 12px rgba(216, 27, 96, 0.4); /* Brillo del fucsia */
+}
+
+/* --- BOTÓN DE MICRÓFONO (Rediseñado) --- */
+#mic-btn {
+    background: #e0e0e0;
+    color: var(--eti-text);
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    border-radius: 50%; /* UI: Botón redondo para el mic */
+    font-size: 1.2rem;
+    box-shadow: none;
+}
+
+#mic-btn.recording {
+    background-color: var(--eti-accent-pink) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(216, 27, 96, 0.6);
+}
+
+/* --- SWITCH DE AUDIO (Accesibilidad) --- */
+#always-audio-container label {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--eti-main-color);
+}

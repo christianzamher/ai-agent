@@ -1,36 +1,58 @@
-# main.py
-from dotenv import load_dotenv
-from coder_agent import Agent
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from grok_agent import GeminiAgent
+import uvicorn
 
-load_dotenv()
+app = FastAPI(title="Mandria Bot API")
 
-print("Iniciando agente de IA (Ollama)")
+# 🛠️ Configuramos los archivos estáticos y templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
-agent = Agent(model="qwen2.5:7b")  # cambia el modelo si querés
+agente = GeminiAgent()
 
-while True:
-    user_input = input("Tú: ").strip()
+@app.get("/")
+async def home(request: Request):
+    # Esto le dice a FastAPI que renderice el HTML que vamos a crear
+    return templates.TemplateResponse(request=request, name="index.html")
 
-    if not user_input:
-        continue
 
-    if user_input.lower() in ("salir", "exit", "bye", "sayonara"):
-        print("Hasta luego!")
-        break
+historiales = {} 
 
-    # Agregar mensaje del usuario al historial
-    agent.messages.append({"role": "user", "content": user_input})
+@app.get("/preguntar")
+async def preguntar(query: str):
+    session_id = "usuario_unico"
+    
+    if session_id not in historiales:
+        historiales[session_id] = []
 
-    # Loop agentico: seguir llamando mientras haya tool calls
-    while True:
-        response = agent.client.chat(
-            model=agent.model,
-            messages=agent.messages,
-            tools=agent.tools
-        )
+    # 🧠 SUPERPODER: El Contexto Silencioso
+    # En lugar de sumarlo todo al query, armamos un bloque de contexto
+    contexto = "\n".join(historiales[session_id])
+    
+    # Le mandamos al agente la pregunta LIMPIA (query) 
+    # pero le pasamos el contexto aparte si tu GeminiAgent lo permite,
+    # o armamos un System Prompt mejorado.
+    
+    instruccion_con_memoria = f"""
+    Contexto de la charla previa:
+    {contexto}
+    
+    Pregunta actual del usuario: {query}
+    """
 
-        called_tool = agent.process_response(response)
+    # Aquí está el truco: le pedimos la respuesta pasándole la instrucción.
+    # Pero para que NO use Tavily con todo ese texto, 
+    # Gemini debe decidir qué parte es la pregunta real.
+    respuesta = agente.get_response(instruccion_con_memoria) 
 
-        # Si no se llamó herramienta, tenemos la respuesta final
-        if not called_tool:
-            break
+    # Guardamos solo lo importante en el historial para no inflarlo
+    historiales[session_id].append(f"U: {query}")
+    historiales[session_id].append(f"M: {respuesta[:100]}...") # Guardamos un resumen
+    historiales[session_id] = historiales[session_id][-6:] # Bajamos a 6 para no saturar
+
+    return {"respuesta": respuesta}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
