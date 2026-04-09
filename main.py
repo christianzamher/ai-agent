@@ -48,7 +48,7 @@ historiales = {}
 @app.get("/")
 async def home(request: Request):
     """Ruta principal que sirve la interfaz web"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 @app.get("/health")
 async def health():
