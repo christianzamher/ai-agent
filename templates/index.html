@@ -19,13 +19,12 @@
 
         <div id="input-area">
             <button id="mic-btn" onclick="toggleMic()" title="Hablar">🎤</button>
-            
-            <input type="text" id="user-input" 
-                   placeholder="Escribí o hablá, no seas mandria..." 
-                   onkeypress="handleKeyPress(event)">
-            
+
+            <input type="text" id="user-input" placeholder="Escribí o hablá, no seas mandria..."
+                onkeypress="handleKeyPress(event)">
+
             <button id="send-btn" onclick="sendMessage(false)">ENVIAR</button>
-            
+
             <div id="always-audio-container">
                 <label for="always-audio">AUDIO</label>
                 <input type="checkbox" id="always-audio">
@@ -34,18 +33,16 @@
     </div>
 
     <script>
-        
-        
+
         let recognition;
         let isRecording = false;
-        let transcripcionFinal = ""; 
 
         function hablar(texto) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const mensaje = new SpeechSynthesisUtterance(texto);
                 mensaje.lang = "es-AR";
-                mensaje.pitch = 0.8;
+                mensaje.pitch = 0.9;
                 mensaje.rate = 1.0;
                 setTimeout(() => { window.speechSynthesis.speak(mensaje); }, 50);
             }
@@ -56,45 +53,58 @@
                 window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
                 recognition.lang = "es-AR";
+
+                // RECUPERADO: Volvemos a permitir que escuche sin cortar solo
                 recognition.continuous = true;
-                recognition.interimResults = true;
+                // CLAVE: No mostramos resultados intermedios para evitar el bardo en móviles
+                recognition.interimResults = false;
 
                 recognition.onresult = (event) => {
-                    let textoInterino = "";
+                    let transcripcionFinal = "";
+                    // Recorremos todos los resultados acumulados
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
-                            transcripcionFinal += event.results[i][0].transcript + " ";
-                        } else {
-                            textoInterino += event.results[i][0].transcript;
+                            transcripcionFinal += event.results[i][0].transcript;
                         }
                     }
-                    document.getElementById('user-input').value = (transcripcionFinal + textoInterino).trim();
+
+                    const input = document.getElementById('user-input');
+                    // Concatenamos lo nuevo a lo que ya estaba, con un espacio
+                    if (transcripcionFinal !== "") {
+                        const valorActual = input.value.trim();
+                        input.value = (valorActual ? valorActual + " " : "") + transcripcionFinal.trim();
+                    }
                 };
+
                 recognition.onerror = () => stopRecording();
+                recognition.onend = () => {
+                    if (isRecording) recognition.start(); // Forzamos que siga escuchando si no dimos STOP
+                };
             }
 
             if (!isRecording) {
                 startRecording();
             } else {
                 stopRecording();
-                sendMessage(true);
+                sendMessage(true); // Envía al presionar STOP
             }
         }
 
         function startRecording() {
             isRecording = true;
-            transcripcionFinal = "";
             document.getElementById('user-input').value = "";
             recognition.start();
-            document.getElementById('mic-btn').innerText = "🛑";
-            document.getElementById('mic-btn').classList.add('recording');
+            const micBtn = document.getElementById('mic-btn');
+            micBtn.innerText = "🛑";
+            micBtn.classList.add('recording');
         }
 
         function stopRecording() {
             isRecording = false;
             recognition.stop();
-            document.getElementById('mic-btn').innerText = "🎤";
-            document.getElementById('mic-btn').classList.remove('recording');
+            const micBtn = document.getElementById('mic-btn');
+            micBtn.innerText = "🎤";
+            micBtn.classList.remove('recording');
         }
 
         async function sendMessage(vieneDeAudio) {
@@ -106,19 +116,17 @@
 
             appendMessage('user', message);
             input.value = '';
-            transcripcionFinal = "";
 
             try {
                 const response = await fetch(`/preguntar?query=${encodeURIComponent(message)}`);
                 const data = await response.json();
                 appendMessage('bot', data.respuesta);
+
                 if (vieneDeAudio || alwaysAudio) {
                     hablar(data.respuesta);
                 }
             } catch (error) {
-                const errorMsg = "Se me cortó una cuerda, che.";
-                appendMessage('bot', errorMsg);
-                if (vieneDeAudio || alwaysAudio) hablar(errorMsg);
+                appendMessage('bot', "Se me cortó una cuerda, che.");
             }
         }
 
@@ -139,4 +147,5 @@
         }
     </script>
 </body>
+
 </html>
