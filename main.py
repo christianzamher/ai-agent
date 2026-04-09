@@ -27,6 +27,10 @@ async def home(request: Request):
     # Esto le dice a FastAPI que renderice el HTML que vamos a crear
     return templates.TemplateResponse(request=request, name="index.html")
 
+@app.get("/health")
+async def health():
+    return {"status": "El Mandria está en el bar y tiene ginebra"}
+
 
 historiales = {} 
 
