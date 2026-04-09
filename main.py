@@ -1,16 +1,27 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from grok_agent import GeminiAgent
-import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+
+# Importamos tu lógica de IA
+from grok_agent import GeminiAgent
 
 app = FastAPI(title="Mandria Bot API")
 
-# 🛠️ Configuramos los archivos estáticos y templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# 🛠️ CONFIGURACIÓN DE RUTAS ABSOLUTAS (Para evitar el Not Found en Render)
+base_path = os.path.dirname(os.path.abspath(__file__))
+static_path = os.path.join(base_path, "static")
+templates_path = os.path.join(base_path, "templates")
 
-# 🕷️ Configuramos CORS
+# Montamos los archivos estáticos (CSS, imágenes)
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# Configuramos el motor de templates
+templates = Jinja2Templates(directory=templates_path)
+
+# 🕷️ CONFIGURACIÓN DE CORS (Esencial para audio y fetch)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,36 +29,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-templates = Jinja2Templates(directory="templates")
 
+# Inicializamos al bardo del agente
 agente = GeminiAgent()
+
+# Diccionario para la memoria de la charla
+historiales = {}
+
+# --- RUTAS ---
 
 @app.get("/")
 async def home(request: Request):
-    # Esto le dice a FastAPI que renderice el HTML que vamos a crear
-    return templates.TemplateResponse(request=request, name="index.html")
+    """Ruta principal que sirve la interfaz web"""
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/health")
 async def health():
-    return {"status": "El Mandria está en el bar y tiene ginebra"}
-
-
-historiales = {} 
+    """Ruta para que Render sepa que el bot está vivo"""
+    return {"status": "El Mandria está en el bar y tiene ginebra", "port": os.environ.get("PORT")}
 
 @app.get("/preguntar")
 async def preguntar(query: str):
-    session_id = "usuario_unico"
+    """Ruta de procesamiento de mensajes con historial"""
+    session_id = "usuario_unico" # Podrías cambiarlo por una IP o ID de sesión más adelante
     
     if session_id not in historiales:
         historiales[session_id] = []
 
-    # 🧠 SUPERPODER: El Contexto Silencioso
-    # En lugar de sumarlo todo al query, armamos un bloque de contexto
+    # Construimos el contexto con los últimos mensajes
     contexto = "\n".join(historiales[session_id])
-    
-    # Le mandamos al agente la pregunta LIMPIA (query) 
-    # pero le pasamos el contexto aparte si tu GeminiAgent lo permite,
-    # o armamos un System Prompt mejorado.
     
     instruccion_con_memoria = f"""
     Contexto de la charla previa:
@@ -56,19 +66,17 @@ async def preguntar(query: str):
     Pregunta actual del usuario: {query}
     """
 
-    # Aquí está el truco: le pedimos la respuesta pasándole la instrucción.
-    # Pero para que NO use Tavily con todo ese texto, 
-    # Gemini debe decidir qué parte es la pregunta real.
+    # Obtenemos la respuesta de tu GeminiAgent
     respuesta = agente.get_response(instruccion_con_memoria) 
 
-    # Guardamos solo lo importante en el historial para no inflarlo
+    # Actualizamos historial (mantenemos solo lo último para no saturar)
     historiales[session_id].append(f"U: {query}")
-    historiales[session_id].append(f"M: {respuesta[:100]}...") # Guardamos un resumen
-    historiales[session_id] = historiales[session_id][-6:] # Bajamos a 6 para no saturar
+    historiales[session_id].append(f"M: {respuesta[:150]}...") 
+    historiales[session_id] = historiales[session_id][-6:] 
 
     return {"respuesta": respuesta}
 
 if __name__ == "__main__":
-    import os
+    # Configuración dinámica de puerto para despliegue
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
