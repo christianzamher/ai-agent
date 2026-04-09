@@ -4,6 +4,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+import os
+from dotenv import load_dotenv
+
+# Esto carga el .env solo si existe (en local), en Render usará las variables del panel.
+load_dotenv() 
+
+# ... el resto de tus imports y código
 
 # Importamos tu lógica de IA
 from grok_agent import GeminiAgent
